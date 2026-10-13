@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Code | Innovación en Software</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-300 font-sans antialiased">
+    <!-- Navegación -->
+    <nav class="flex items-center justify-between px-8 py-6 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+            <svg class="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+            <span class="text-2xl font-bold text-white tracking-wide">Nexus<span class="text-cyan-400">Code</span></span>
+        </div>
+        <div>
+            <!-- Este es el botón que detona el inicio de sesión de IBM -->
+            <a href="/protected/protected.html" class="px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-semibold rounded-lg transition-all duration-300 shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                Portal de Acceso
+            </a>
+        </div>
+    </nav>
+
+    <!-- Sección Principal (Hero) -->
+    <main class="max-w-6xl mx-auto px-8 py-24 flex flex-col items-center text-center">
+        <h1 class="text-5xl md:text-7xl font-extrabold text-white mb-8 leading-tight">
+            Construimos el futuro <br/> <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">línea por línea</span>
+        </h1>
+        <p class="text-xl text-slate-400 mb-12 max-w-2xl">
+            Soluciones de software empresarial de alto rendimiento. Accede a tu panel de control seguro para gestionar tus despliegues, monitorear métricas y colaborar con nuestro equipo.
+        </p>
+        <div class="flex gap-6">
+            <!-- Botón principal que también lleva al login -->
+            <a href="/protected/protected.html" class="px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold rounded-lg text-lg transition-all duration-300 flex items-center gap-2">
+                Ingresar al Dashboard
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+            </a>
+        </div>
+    </main>
+
+    <!-- Características -->
+    <section class="max-w-6xl mx-auto px-8 py-16 grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-slate-800">
+        <div class="bg-slate-800/50 p-8 rounded-xl border border-slate-700">
+            <h3 class="text-xl font-bold text-white mb-3">Seguridad Nivel Enterprise</h3>
+            <p class="text-slate-400">Acceso protegido por IBM App ID con encriptación de extremo a extremo.</p>
+        </div>
+        <div class="bg-slate-800/50 p-8 rounded-xl border border-slate-700">
+            <h3 class="text-xl font-bold text-white mb-3">Infraestructura Cloud</h3>
+            <p class="text-slate-400">Despliegues automatizados y escalabilidad sin límites para tus proyectos.</p>
+        </div>
+        <div class="bg-slate-800/50 p-8 rounded-xl border border-slate-700">
+            <h3 class="text-xl font-bold text-white mb-3">Métricas en Tiempo Real</h3>
+            <p class="text-slate-400">Analíticas detalladas del rendimiento de tus aplicaciones y servidores.</p>
+        </div>
+    </section>
+</body>
+</html>
