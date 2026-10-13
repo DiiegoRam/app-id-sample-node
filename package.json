@@ -4,6 +4,9 @@
   "description": "App ID web application sample",
   "main": "app.js",
   "private": true,
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "scripts": {
     "start": "node app.js"
   },
