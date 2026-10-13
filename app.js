@@ -86,19 +86,12 @@ app.listen(port, () => {
 });
 
 function getAppIDConfig() {
-	let config;
-
-	try {
-		// if running locally we'll have the local config file
-		config = require('./localdev-config.json');
-	} catch (e) {
-		if (process.env.APPID_SERVICE_BINDING) { // if running on Kubernetes this env variable would be defined
-			config = JSON.parse(process.env.APPID_SERVICE_BINDING);
-			config.redirectUri = process.env.redirectUri;
-		} else { // running on CF
-			let vcapApplication = JSON.parse(process.env["VCAP_APPLICATION"]);
-			return { "redirectUri": "https://" + vcapApplication["application_uris"][0] + CALLBACK_URL };
-		}
-	}
+	let config = {
+		clientId: process.env.clientId || "a2b47310-3d6a-49a3-b73f-e2c27cdeb25c",
+		secret: process.env.secret || "OWVmODA3YjAtZmVkZS00NmMzLWFkMWYtYWI0NDc5ZGEyODYx",
+		tenantId: process.env.tenantId || "3e0457c8-a058-46f9-bf36-8d306259de9e",
+		oauthServerUrl: process.env.oauthServerUrl || "https://us-south.appid.cloud.ibm.com/oauth/v4/3e0457c8-a058-46f9-bf36-8d306259de9e",
+		redirectUri: process.env.redirectUri || "https://application-38.2fv6zw4ty1jn.us-south.codeengine.appdomain.cloud" + CALLBACK_URL
+	};
 	return config;
 }
