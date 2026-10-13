@@ -27,15 +27,16 @@ const CALLBACK_URL = "/ibm/cloud/appid/callback";
 
 const port = process.env.PORT || 3000;
 
-// Setup express application to use express-session middleware
+// Configuración de sesión optimizada para Render
 app.use(session({
 	secret: process.env.SESSION_SECRET || "123456",
-	resave: false,
-	saveUninitialized: false,
-	proxy: true, // Necesario para entornos detrás de balanceadores como Render
+	resave: true,
+	saveUninitialized: true,
+	proxy: true,
 	cookie: {
-		secure: true, // Requerido para HTTPS en Render
-		sameSite: 'lax'
+		secure: false, // Cambiado a false temporalmente para evitar rechazo de cookies detrás del proxy SSL de Render
+		httpOnly: true,
+		maxAge: 24 * 60 * 60 * 1000 // 1 día
 	}
 }));
 
@@ -51,7 +52,7 @@ passport.deserializeUser((obj, cb) => cb(null, obj));
 
 app.get(CALLBACK_URL, passport.authenticate(WebAppStrategy.STRATEGY_NAME, { failureRedirect: '/error' }));
 
-// Proteger la ruta /protected (nota: se cambió session: false a true para mantener la sesión activa de Passport)
+// Protect everything under /protected
 app.use("/protected", passport.authenticate(WebAppStrategy.STRATEGY_NAME, { session: true }));
 
 // This will statically serve pages:
@@ -85,7 +86,6 @@ app.listen(port, () => {
 });
 
 function getAppIDConfig() {
-	// Detectar dinámicamente si hay una URL configurada o usar la de Render / localhost
 	let explicitRedirectUri = process.env.redirectUri;
 	
 	let config = {
@@ -95,7 +95,6 @@ function getAppIDConfig() {
 		oauthServerUrl: process.env.OAUTHSERVERURL || process.env.oauthServerUrl || "https://us-south.appid.cloud.ibm.com/oauth/v4/3e0457c8-a058-46f9-bf36-8d306259de9e"
 	};
 
-	// Si defines una variable de entorno RENDER_EXTERNAL_URL (que Render provee automáticamente), la usa para construir el callback
 	if (process.env.RENDER_EXTERNAL_URL) {
 		config.redirectUri = process.env.RENDER_EXTERNAL_URL + CALLBACK_URL;
 	} else if (explicitRedirectUri) {
