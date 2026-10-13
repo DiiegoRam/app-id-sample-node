@@ -20,19 +20,23 @@ const WebAppStrategy = appID.WebAppStrategy;
 
 const app = express();
 
+// IMPORTANTE: Indicar a Express que confíe en el proxy de Render (HTTPS)
+app.set('trust proxy', 1);
+
 const CALLBACK_URL = "/ibm/cloud/appid/callback";
 
 const port = process.env.PORT || 3000;
 
 // Setup express application to use express-session middleware
-// Must be configured with proper session storage for production
-// environments. See https://github.com/expressjs/session for
-// additional documentation
 app.use(session({
-	secret: "123456",
-	resave: true,
-	saveUninitialized: true,
-	proxy: true
+	secret: process.env.SESSION_SECRET || "123456",
+	resave: false,
+	saveUninitialized: false,
+	proxy: true, // Necesario para entornos detrás de balanceadores como Render
+	cookie: {
+		secure: true, // Requerido para HTTPS en Render
+		sameSite: 'lax'
+	}
 }));
 
 // Configure express application to use passportjs
@@ -42,39 +46,34 @@ app.use(passport.session());
 let webAppStrategy = new WebAppStrategy(getAppIDConfig());
 passport.use(webAppStrategy);
 
-// Configure passportjs with user serialization/deserialization. This is required
-// for authenticated session persistence accross HTTP requests. See passportjs docs
-// for additional information http://passportjs.org/docs
 passport.serializeUser((user, cb) => cb(null, user));
 passport.deserializeUser((obj, cb) => cb(null, obj));
 
-// Callback to finish the authorization process. Will retrieve access and identity tokens/
-// from AppID service and redirect to either (in below order)
-// 1. the original URL of the request that triggered authentication, as persisted in HTTP session under WebAppStrategy.ORIGINAL_URL key.
-// 2. successRedirect as specified in passport.authenticate(name, {successRedirect: "...."}) invocation
-// 3. application root ("/")
-app.get(CALLBACK_URL, passport.authenticate(WebAppStrategy.STRATEGY_NAME, { failureRedirect: '/error', session: false }));
+app.get(CALLBACK_URL, passport.authenticate(WebAppStrategy.STRATEGY_NAME, { failureRedirect: '/error' }));
 
-// Protect everything under /protected
-app.use("/protected", passport.authenticate(WebAppStrategy.STRATEGY_NAME, { session: false }));
+// Proteger la ruta /protected (nota: se cambió session: false a true para mantener la sesión activa de Passport)
+app.use("/protected", passport.authenticate(WebAppStrategy.STRATEGY_NAME, { session: true }));
 
 // This will statically serve pages:
 app.use(express.static("public"));
 
-// // This will statically serve the protected page (after authentication, since /protected is a protected area):
+// This will statically serve the protected page:
 app.use('/protected', express.static("protected"));
 
 app.get("/logout", (req, res) => {
-	//Note: if you enabled SSO for Cloud Directory be sure to use webAppStrategy.logoutSSO instead.
 	req._sessionManager = false;
 	WebAppStrategy.logout(req);
 	res.clearCookie("refreshToken");
 	res.redirect("/");
 });
 
-//Serves the identity token payload
+// Serves the identity token payload
 app.get("/protected/api/idPayload", (req, res) => {
-	res.send(req.session[WebAppStrategy.AUTH_CONTEXT].identityTokenPayload);
+	if (req.session && req.session[WebAppStrategy.AUTH_CONTEXT]) {
+		res.send(req.session[WebAppStrategy.AUTH_CONTEXT].identityTokenPayload);
+	} else {
+		res.status(401).send("No autorizado");
+	}
 });
 
 app.get('/error', (req, res) => {
@@ -82,16 +81,26 @@ app.get('/error', (req, res) => {
 });
 
 app.listen(port, () => {
-	console.log("Listening on http://localhost:" + port);
+	console.log("Listening on port " + port);
 });
 
 function getAppIDConfig() {
+	// Detectar dinámicamente si hay una URL configurada o usar la de Render / localhost
+	let explicitRedirectUri = process.env.redirectUri;
+	
 	let config = {
-		clientId: process.env.clientId || "a2b47310-3d6a-49a3-b73f-e2c27cdeb25c",
-		secret: process.env.secret || "OWVmODA3YjAtZmVkZS00NmMzLWFkMWYtYWI0NDc5ZGEyODYx",
-		tenantId: process.env.tenantId || "3e0457c8-a058-46f9-bf36-8d306259de9e",
-		oauthServerUrl: process.env.oauthServerUrl || "https://us-south.appid.cloud.ibm.com/oauth/v4/3e0457c8-a058-46f9-bf36-8d306259de9e",
-		redirectUri: process.env.redirectUri || "https://application-38.2fv6zw4ty1jn.us-south.codeengine.appdomain.cloud" + CALLBACK_URL
+		clientId: process.env.CLIENT_ID || process.env.clientId || "a2b47310-3d6a-49a3-b73f-e2c27cdeb25c",
+		secret: process.env.SECRET || process.env.secret || "OWVmODA3YjAtZmVkZS00NmMzLWFkMWYtYWI0NDc5ZGEyODYx",
+		tenantId: process.env.TENANT_ID || process.env.tenantId || "3e0457c8-a058-46f9-bf36-8d306259de9e",
+		oauthServerUrl: process.env.OAUTHSERVERURL || process.env.oauthServerUrl || "https://us-south.appid.cloud.ibm.com/oauth/v4/3e0457c8-a058-46f9-bf36-8d306259de9e"
 	};
+
+	// Si defines una variable de entorno RENDER_EXTERNAL_URL (que Render provee automáticamente), la usa para construir el callback
+	if (process.env.RENDER_EXTERNAL_URL) {
+		config.redirectUri = process.env.RENDER_EXTERNAL_URL + CALLBACK_URL;
+	} else if (explicitRedirectUri) {
+		config.redirectUri = explicitRedirectUri;
+	}
+
 	return config;
 }
